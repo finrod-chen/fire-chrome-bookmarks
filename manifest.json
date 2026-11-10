@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Bookmark Tags: Firefox-style tag search",
+  "short_name": "Bookmark Tags",
+  "version": "1.0.0",
+  "description": "Firefox \u5f0f\u66f8\u7c3d tag\uff1a\u628a #\u6a19\u7c64 \u5b58\u9032\u66f8\u7c3d\u6a19\u984c\uff0c\u7528\u7db2\u5740\u5217\u591a\u95dc\u9375\u5b57\u5373\u6642\u641c\u5c0b\u3002\u96f6\u4f9d\u8cf4\u3001\u8cc7\u6599\u53ef\u651c\u3002",
+  "minimum_chrome_version": "114",
+  "permissions": ["bookmarks", "tabs"],
+  "omnibox": { "keyword": "bm" },
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Bookmark Tags\uff1a\u70ba\u6b64\u5206\u9801\u52a0\u4e0a #\u6a19\u7c64\uff08Alt+Shift+B\uff09"
+  },
+  "commands": {
+    "save-with-tags": {
+      "suggested_key": { "default": "Alt+Shift+B" },
+      "description": "\u70ba\u76ee\u524d\u5206\u9801\u52a0\u4e0a\u6a19\u7c64\u4e26\u5b58\u66f8\u7c3d"
+    }
+  }
+}
