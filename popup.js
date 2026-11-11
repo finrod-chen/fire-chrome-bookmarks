@@ -1,111 +1,131 @@
-import { parseTitle, buildIndex, search } from './search.js';
+import { parseTitle, buildIndex, tagCounts, splitTags, composeTitle } from './search.js';
+import { t, localize } from './i18n.js';
 
-const params = new URLSearchParams(location.search);
-const q = params.get('q');
-const list = document.getElementById('list');
-const searchMode = document.getElementById('search-mode');
-const addMode = document.getElementById('add-mode');
+localize();
+const $ = (id) => document.getElementById(id);
+const titleEl = $('title'), input = $('tag-input'), box = $('tagbox'), suggestEl = $('suggest');
+const statusEl = $('status'), hintEl = $('hint'), saveBtn = $('save'), removeBtn = $('remove');
 
-if (q != null) {
-  // 完整結果模式：由 omnibox 按 Enter 開啟
-  addMode.classList.add('hidden');
-  searchMode.classList.remove('hidden');
-  document.title = '書籤：' + q;
-  document.getElementById('q').textContent = q;
-  const index = buildIndex(await chrome.bookmarks.getTree());
-  const hits = search(index, q, 50);
-  if (!hits.length) {
-    list.innerHTML = '<p class="empty">沒有符合的書籤。換個關鍵字，或先用 Alt+Shift+B 幫頁面加上 tag？</p>';
+let tags = [];
+let allTags = [];
+
+function setStatus(msg, err = false) {
+  statusEl.textContent = msg;
+  statusEl.classList.toggle('err', err);
+  hintEl.classList.toggle('hidden', !!msg);
+}
+
+function renderChips() {
+  box.querySelectorAll('.chip').forEach((c) => c.remove());
+  for (const tag of tags) {
+    const c = document.createElement('span');
+    c.className = 'chip';
+    c.textContent = '#' + tag;
+    const x = document.createElement('button');
+    x.className = 'x'; x.type = 'button'; x.textContent = '×'; x.title = t('remove');
+    x.addEventListener('click', () => { tags = tags.filter((v) => v !== tag); renderChips(); renderSuggest(); input.focus(); });
+    c.appendChild(x);
+    box.insertBefore(c, input);
   }
-  let selected = -1;
-  hits.forEach((h) => {
-    const li = document.createElement('li');
-    const a = document.createElement('a');
-    a.href = h.url;
-    a.textContent = h.bare || '(無標題)';
-    li.appendChild(a);
-    if (h.tags.length) {
-      const tags = document.createElement('span');
-      tags.className = 'tags';
-      tags.textContent = h.tags.map((t) => '#' + t).join(' ');
-      li.appendChild(tags);
-    }
-    const url = document.createElement('div');
-    url.className = 'url';
-    url.textContent = h.url;
-    li.appendChild(url);
-    list.appendChild(li);
-  });
-  function setSelected(i) {
-    selected = Math.max(0, Math.min(hits.length - 1, i));
-    [...list.children].forEach((el, j) => el.classList.toggle('selected', j === selected));
-    list.children[selected]?.scrollIntoView({ block: 'nearest' });
+}
+
+function renderSuggest() {
+  const q = input.value.replace(/^#/, '').trim().toLowerCase();
+  const have = new Set(tags.map((x) => x.toLowerCase()));
+  const list = allTags
+    .filter((e) => !have.has(e.tag.toLowerCase()) && (!q || e.tag.toLowerCase().includes(q)))
+    .slice(0, 8);
+  suggestEl.querySelectorAll('button').forEach((b) => b.remove());
+  suggestEl.classList.toggle('hidden', !list.length);
+  for (const e of list) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip';
+    b.textContent = '#' + e.tag;
+    b.addEventListener('click', () => { addTags([e.tag]); input.value = ''; renderSuggest(); input.focus(); });
+    suggestEl.appendChild(b);
   }
-  if (hits.length) setSelected(0);
-  document.addEventListener('keydown', (e) => {
-    if (!hits.length) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(selected + 1); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setSelected(selected - 1); }
-    else if (e.key === 'Enter') {
-      e.preventDefault();
-      const hit = hits[selected];
-      if (e.altKey || e.metaKey) window.open(hit.url, '_blank');
-      else location.href = hit.url;
-    }
-  });
+  return list;
+}
+
+function addTags(list) {
+  for (const tag of list) if (!tags.some((v) => v.toLowerCase() === tag.toLowerCase())) tags.push(tag);
+  renderChips();
+}
+
+function commitInput() {
+  const parts = splitTags(input.value);
+  if (parts.length) addTags(parts);
+  input.value = '';
+  renderSuggest();
+}
+
+box.addEventListener('click', () => input.focus());
+input.addEventListener('input', () => {
+  if (/[\s,，、;；]$/.test(input.value)) commitInput(); else renderSuggest();
+});
+
+// 取得要存的分頁（點圖示或 Alt+Shift+B 都會授與 activeTab）
+// ?tabId= 讓獨立視窗（或自動化測試）指定分頁
+const tabIdParam = new URLSearchParams(location.search).get('tabId');
+let tab = tabIdParam ? await chrome.tabs.get(Number(tabIdParam)).catch(() => null) : null;
+if (!tab) [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+if (!tab || !tab.url) {
+  $('host').textContent = t('noTab');
+  [saveBtn, titleEl, input].forEach((el) => { el.disabled = true; });
 } else {
-  // 新增書籤模式
-  const titleEl = document.getElementById('page-title');
-  const tagsEl = document.getElementById('tags');
-  const statusEl = document.getElementById('status');
-  const saveBtn = document.getElementById('save');
+  let host = tab.url;
+  try { host = new URL(tab.url).host || tab.url; } catch (e) { /* keep raw */ }
+  $('host').textContent = host;
+  $('fav').textContent = (host.replace(/^www\./, '')[0] || '#').toUpperCase();
 
-  // 快捷鍵/視窗模式會帶 tabId；一般彈出視窗直接抓作用中分頁
-  let tab = null;
-  const tabId = params.has('tabId') ? Number(params.get('tabId')) : null;
-  if (tabId != null) {
-    try { tab = await chrome.tabs.get(tabId); } catch (e) { /* 分頁已關閉 */ }
+  const [tree, found] = await Promise.all([chrome.bookmarks.getTree(), chrome.bookmarks.search({ url: tab.url }).catch(() => [])]);
+  allTags = tagCounts(buildIndex(tree));
+  // 同網址已有書籤時，編輯它的 tag 而不是重複新增
+  const existing = found[0];
+  const parsed = existing ? parseTitle(existing.title) : { bare: tab.title || '', tags: [] };
+  if (existing) {
+    $('note').classList.remove('hidden');
+    saveBtn.textContent = t('update');
+    removeBtn.classList.remove('hidden');
   }
-  if (!tab) {
-    [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  }
+  titleEl.value = parsed.bare;
+  tags = [...parsed.tags];
+  renderChips();
+  renderSuggest();
+  input.focus();
 
-  if (!tab) {
-    titleEl.textContent = '找不到作用中的分頁';
-    saveBtn.disabled = true;
-  } else {
-    // 同網址已有書籤時，編輯它的 tag 而不是重複新增
-    const existing = (await chrome.bookmarks.search({ url: tab.url }))[0];
-    const parsed = existing ? parseTitle(existing.title) : { bare: tab.title || '', tags: [] };
-
-    titleEl.textContent = parsed.bare || tab.url;
-    tagsEl.value = parsed.tags.join(' ');
-    tagsEl.focus();
-    tagsEl.select();
-
-    async function save() {
-      const tags = [...new Set(
-        tagsEl.value
-          .split(/[\s,，、;；]+/)
-          .map((t) => t.replace(/^#/, '').trim())
-          .filter(Boolean)
-      )];
-      const title = tags.length
-        ? parsed.bare + ' ' + tags.map((t) => '#' + t).join(' ')
-        : parsed.bare;
-      try {
-        if (existing) {
-          await chrome.bookmarks.update(existing.id, { title: title.trim() });
-        } else {
-          await chrome.bookmarks.create({ parentId: '2', title: title.trim(), url: tab.url }); // 2 = 其他書籤
-        }
-        statusEl.textContent = '已儲存 ✓';
-        setTimeout(() => window.close(), 500);
-      } catch (e) {
-        statusEl.textContent = '儲存失敗：' + e.message;
-      }
+  async function save() {
+    commitInput();
+    const title = composeTitle(titleEl.value || parsed.bare || tab.title || tab.url, tags);
+    try {
+      if (existing) await chrome.bookmarks.update(existing.id, { title });
+      else await chrome.bookmarks.create({ title, url: tab.url }); // 預設存到「其他書籤」
+      setStatus(t('saved'));
+      setTimeout(() => window.close(), 600);
+    } catch (e) {
+      setStatus(t('saveFailed', e.message), true);
     }
-    saveBtn.addEventListener('click', save);
-    tagsEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
   }
+
+  saveBtn.addEventListener('click', save);
+  removeBtn.addEventListener('click', async () => {
+    if (!existing) return;
+    await chrome.bookmarks.remove(existing.id);
+    setStatus(t('removed'));
+    setTimeout(() => window.close(), 600);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.isComposing) return; // 中文輸入法選字中，不要攔 Enter
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      save(); // 打完標籤直接 Enter 就存
+    } else if (e.key === 'Tab' && input.value.trim()) {
+      const first = renderSuggest()[0];
+      if (first) { e.preventDefault(); addTags([first.tag]); input.value = ''; renderSuggest(); }
+    } else if (e.key === 'Backspace' && !input.value && tags.length) {
+      tags.pop(); renderChips(); renderSuggest();
+    }
+  });
+  titleEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); save(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) save(); });
 }

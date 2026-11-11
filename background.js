@@ -1,89 +1,49 @@
 import { buildIndex, search } from './search.js';
 
+const t = (k, ...a) => chrome.i18n.getMessage(k, a);
 let index = [];
+let ready = null;
 
-async function rebuild() {
-  try {
-    index = buildIndex(await chrome.bookmarks.getTree());
-  } catch (e) {
-    // 書籤 API 偶爾在 service worker 喚起初期尚未就緒，下一個事件會再補
-  }
+function rebuild() {
+  ready = chrome.bookmarks.getTree().then((tree) => { index = buildIndex(tree); }).catch(() => {});
+  return ready;
 }
 rebuild();
-chrome.bookmarks.onCreated.addListener(rebuild);
-chrome.bookmarks.onRemoved.addListener(rebuild);
-chrome.bookmarks.onChanged.addListener(rebuild);
-chrome.bookmarks.onMoved.addListener(rebuild);
-
-function xmlEscape(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-function shortUrl(url) {
-  return url.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 80);
+for (const ev of ['onCreated', 'onRemoved', 'onChanged', 'onMoved', 'onImportEnded']) {
+  chrome.bookmarks[ev]?.addListener(rebuild);
 }
 
-chrome.omnibox.setDefaultSuggestion({
-  description:
-    '<match>bm</match> 搜尋書籤 tag：輸入多個關鍵字（AND），' +
-    '<dim>#開頭 只比對標籤，Enter 看完整結果</dim>',
-});
+const xmlEscape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+const shortUrl = (url) => url.replace(/^https?:\/\/(www\.)?/i, '').slice(0, 80);
+const resultsUrl = (q) => chrome.runtime.getURL('results.html') + '?q=' + encodeURIComponent(q);
 
-chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+chrome.omnibox.setDefaultSuggestion({ description: t('omniDefault') });
+
+chrome.omnibox.onInputChanged.addListener(async (text, suggest) => {
   if (!text.trim()) { suggest([]); return; }
-  const hits = search(index, text, 10);
-  suggest(
-    hits.map((h) => ({
-      content: h.url,
-      description:
-        xmlEscape(h.bare || '(無標題)') + ' ' +
-        '<dim>' + h.tags.map((t) => '#' + t).join(' ') + '</dim> ' +
-        '<url>' + xmlEscape(shortUrl(h.url)) + '</url>',
-    }))
-  );
+  await ready;
+  const hits = search(index, text, 8);
+  suggest(hits.map((h) => ({
+    content: h.url,
+    description:
+      xmlEscape(h.bare || t('untitled')) +
+      (h.tags.length ? ' <dim>' + xmlEscape(h.tags.map((x) => '#' + x).join(' ')) + '</dim>' : '') +
+      ' - <url>' + xmlEscape(shortUrl(h.url)) + '</url>',
+  })));
 });
 
 chrome.omnibox.onInputEntered.addListener(async (text, disposition) => {
   const query = text.trim();
   let url;
-  if (/^https?:\/\//i.test(query)) {
-    url = query; // 使用者選了某筆建議
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(query)) {
+    url = query; // 選了某筆建議（content 就是網址）
   } else {
+    await ready;
     const hits = search(index, query, 1);
-    url = hits.length
-      ? hits[0].url
-      : chrome.runtime.getURL('popup.html') + '?q=' + encodeURIComponent(query);
+    // 直接 Enter 開第一筆；沒有命中就開完整結果頁
+    url = hits.length ? hits[0].url : resultsUrl(query);
   }
-  const options = { url };
-  if (disposition === 'newForegroundTab') {
-    chrome.tabs.create({ ...options, active: true });
-  } else if (disposition === 'newBackgroundTab') {
-    chrome.tabs.create({ ...options, active: false });
-  } else {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (tab && /^https?:\/\//i.test(tab.url || '')) {
-      chrome.tabs.update(tab.id, options);
-    } else {
-      chrome.tabs.create(options);
-    }
-  }
-});
-
-// Alt+Shift+B：開啟「存 tag」彈出視窗
-chrome.commands.onCommand.addListener(async (command) => {
-  if (command === 'save-with-tags') {
-    try {
-      await chrome.action.openPopup();
-    } catch (e) {
-      // 舊版 Chrome 沒有 openPopup；退而求其次開視窗
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab) {
-        chrome.windows.create({
-          url: chrome.runtime.getURL('popup.html') + '?tabId=' + tab.id,
-          type: 'popup',
-          width: 380,
-          height: 220,
-        });
-      }
-    }
-  }
+  if (disposition === 'newForegroundTab') chrome.tabs.create({ url, active: true });
+  else if (disposition === 'newBackgroundTab') chrome.tabs.create({ url, active: false });
+  else chrome.tabs.update({ url });
 });

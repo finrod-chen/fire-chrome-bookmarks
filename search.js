@@ -28,6 +28,7 @@ export function buildIndex(nodes) {
       out.push({
         id: node.id,
         title: node.title || '',
+        url: node.url,
         bare,
         tags,
         bareLower: bare.toLowerCase(),
@@ -76,4 +77,31 @@ export function search(index, query, limit = 20) {
     (a, b) => b.score - a.score || a.bare.length - b.bare.length || a.urlLower.localeCompare(b.urlLower)
   );
   return limit ? hits.slice(0, limit) : hits;
+}
+
+// 統計每個 tag 出現次數，常用的排前面（給標籤建議與結果頁篩選用）
+export function tagCounts(index) {
+  const m = new Map();
+  for (const it of index) {
+    for (const t of it.tags) {
+      const k = t.toLowerCase();
+      const e = m.get(k) || { tag: t, count: 0 };
+      e.count++;
+      m.set(k, e);
+    }
+  }
+  return [...m.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
+}
+
+// 把使用者輸入拆成 tag：空白、逗號（含全形）、頓號、分號都算分隔
+export function splitTags(text = '') {
+  return [...new Set(
+    text.split(/[\s,，、;；]+/).map((t) => t.replace(/^#+/, '').trim()).filter(Boolean)
+  )];
+}
+
+// 組回書籤標題：「標題 #tag1 #tag2」
+export function composeTitle(bare, tags) {
+  const b = (bare || '').trim();
+  return (tags.length ? (b + ' ' + tags.map((t) => '#' + t).join(' ')) : b).trim();
 }

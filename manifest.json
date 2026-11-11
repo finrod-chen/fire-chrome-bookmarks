@@ -1,21 +1,43 @@
 {
   "manifest_version": 3,
-  "name": "Bookmark Tags: Firefox-style tag search",
-  "short_name": "Bookmark Tags",
-  "version": "1.0.0",
-  "description": "Firefox 式書籤 tag：把 #標籤 存進書籤標題，用網址列多關鍵字即時搜尋。零依賴、資料可攜。",
+  "name": "__MSG_extName__",
+  "short_name": "__MSG_extShortName__",
+  "version": "1.1.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "minimum_chrome_version": "114",
-  "permissions": ["bookmarks", "tabs"],
-  "omnibox": { "keyword": "bm" },
-  "background": { "service_worker": "background.js", "type": "module" },
+  "permissions": [
+    "bookmarks",
+    "activeTab"
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "omnibox": {
+    "keyword": "bm"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Bookmark Tags：為此分頁加上 #標籤（Alt+Shift+B）"
+    "default_title": "__MSG_actionTitle__",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
   },
   "commands": {
-    "save-with-tags": {
-      "suggested_key": { "default": "Alt+Shift+B" },
-      "description": "為目前分頁加上標籤並存書籤"
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+B"
+      },
+      "description": "__MSG_cmdSave__"
     }
   }
 }
