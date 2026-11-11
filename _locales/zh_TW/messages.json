@@ -1,0 +1,93 @@
+{
+  "extName": {
+    "message": "Bookmark Tags：Firefox 式書籤標籤搜尋"
+  },
+  "extShortName": {
+    "message": "Bookmark Tags"
+  },
+  "extDescription": {
+    "message": "幫 Chrome 書籤加上 #標籤，在網址列打幾個關鍵字就找回頁面。標籤存在書籤標題裡，跟著同步與匯出。"
+  },
+  "actionTitle": {
+    "message": "為此分頁加上標籤（Alt+Shift+B）"
+  },
+  "cmdSave": {
+    "message": "為目前分頁加上標籤並存書籤"
+  },
+  "omniDefault": {
+    "message": "<match>搜尋書籤</match>：輸入多個關鍵字（全部命中） <dim>· #開頭只比對標籤 · Enter 開啟第一筆</dim>"
+  },
+  "untitled": {
+    "message": "（無標題）"
+  },
+  "titleLabel": {
+    "message": "標題"
+  },
+  "tagsLabel": {
+    "message": "標籤"
+  },
+  "tagsPlaceholder": {
+    "message": "輸入標籤…"
+  },
+  "suggested": {
+    "message": "常用標籤"
+  },
+  "save": {
+    "message": "儲存"
+  },
+  "update": {
+    "message": "更新"
+  },
+  "remove": {
+    "message": "刪除書籤"
+  },
+  "saved": {
+    "message": "已儲存 ✓"
+  },
+  "removed": {
+    "message": "已刪除"
+  },
+  "saveFailed": {
+    "message": "儲存失敗：$ERR$",
+    "placeholders": {
+      "ERR": {
+        "content": "$1"
+      }
+    }
+  },
+  "alreadyBookmarked": {
+    "message": "已在書籤中：編輯它的標籤"
+  },
+  "noTab": {
+    "message": "此分頁無法加入書籤"
+  },
+  "hintSave": {
+    "message": "空白新增標籤 · Enter 儲存"
+  },
+  "openSearch": {
+    "message": "搜尋全部"
+  },
+  "searchTitle": {
+    "message": "搜尋書籤"
+  },
+  "searchPlaceholder": {
+    "message": "關鍵字或 #標籤，例如 model #gear"
+  },
+  "resultCount": {
+    "message": "$N$ 筆書籤",
+    "placeholders": {
+      "N": {
+        "content": "$1"
+      }
+    }
+  },
+  "noResults": {
+    "message": "沒有符合的書籤。少打幾個關鍵字，或先用 Alt+Shift+B 幫頁面加標籤。"
+  },
+  "allTags": {
+    "message": "所有標籤"
+  },
+  "searchHint": {
+    "message": "↑↓ 選擇 · Enter 開啟 · Ctrl/⌘+Enter 新分頁開啟 · 網址列輸入 bm 加空白即可搜尋"
+  }
+}

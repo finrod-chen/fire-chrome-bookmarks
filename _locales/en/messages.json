@@ -1,0 +1,93 @@
+{
+  "extName": {
+    "message": "Bookmark Tags – Firefox-style tag search"
+  },
+  "extShortName": {
+    "message": "Bookmark Tags"
+  },
+  "extDescription": {
+    "message": "Add #tags to Chrome bookmarks and find any page from the address bar with a few keywords. Tags live in the title, so they sync and export."
+  },
+  "actionTitle": {
+    "message": "Tag this page (Alt+Shift+B)"
+  },
+  "cmdSave": {
+    "message": "Tag and bookmark the current tab"
+  },
+  "omniDefault": {
+    "message": "<match>Search bookmarks</match> by keywords (all must match) <dim>· #word matches tags only · Enter opens the top match</dim>"
+  },
+  "untitled": {
+    "message": "(untitled)"
+  },
+  "titleLabel": {
+    "message": "Title"
+  },
+  "tagsLabel": {
+    "message": "Tags"
+  },
+  "tagsPlaceholder": {
+    "message": "Add tags…"
+  },
+  "suggested": {
+    "message": "Your tags"
+  },
+  "save": {
+    "message": "Save"
+  },
+  "update": {
+    "message": "Update"
+  },
+  "remove": {
+    "message": "Remove"
+  },
+  "saved": {
+    "message": "Saved ✓"
+  },
+  "removed": {
+    "message": "Removed"
+  },
+  "saveFailed": {
+    "message": "Couldn't save: $ERR$",
+    "placeholders": {
+      "ERR": {
+        "content": "$1"
+      }
+    }
+  },
+  "alreadyBookmarked": {
+    "message": "Already bookmarked: editing its tags"
+  },
+  "noTab": {
+    "message": "No page to bookmark here"
+  },
+  "hintSave": {
+    "message": "Space adds a tag · Enter saves"
+  },
+  "openSearch": {
+    "message": "Search all"
+  },
+  "searchTitle": {
+    "message": "Search bookmarks"
+  },
+  "searchPlaceholder": {
+    "message": "Keywords or #tags, e.g. model #gear"
+  },
+  "resultCount": {
+    "message": "$N$ bookmarks",
+    "placeholders": {
+      "N": {
+        "content": "$1"
+      }
+    }
+  },
+  "noResults": {
+    "message": "No bookmarks match. Try fewer keywords, or tag a page with Alt+Shift+B."
+  },
+  "allTags": {
+    "message": "All tags"
+  },
+  "searchHint": {
+    "message": "↑↓ to choose · Enter to open · Ctrl/⌘+Enter in new tab · type bm + space in the address bar"
+  }
+}

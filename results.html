@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="ui.css">
+<link rel="icon" href="icons/icon32.png">
+</head>
+<body class="results">
+  <div class="wrap">
+    <div class="brand"><img src="icons/icon48.png" alt=""><span data-i18n="searchTitle"></span></div>
+    <div class="searchbar"><input class="text" id="q" data-i18n-placeholder="searchPlaceholder" spellcheck="false" autocomplete="off" autofocus></div>
+    <div class="bar"><span id="count"></span></div>
+    <div class="tagcloud" id="tags"></div>
+    <ol class="list" id="list"></ol>
+    <div class="empty hidden" id="empty"><img src="icons/icon128.png" alt=""><span data-i18n="noResults"></span></div>
+    <div class="foot" data-i18n="searchHint"></div>
+  </div>
+  <script type="module" src="results.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <div class="brand">
+    <img src="icons/icon32.png" alt="">
+    <span data-i18n="extShortName"></span>
+    <span class="spacer"></span>
+    <a class="link" id="open-search" href="results.html" target="_blank" data-i18n="openSearch"></a>
+  </div>
+
+  <div class="page">
+    <div class="fav" id="fav">#</div>
+    <div class="meta">
+      <div class="host" id="host"></div>
+      <div class="note hidden" id="note" data-i18n="alreadyBookmarked"></div>
+    </div>
+  </div>
+
+  <label class="field" for="title" data-i18n="titleLabel"></label>
+  <input class="text" id="title" spellcheck="false">
+
+  <label class="field" for="tag-input" data-i18n="tagsLabel"></label>
+  <div class="tagbox" id="tagbox">
+    <input id="tag-input" data-i18n-placeholder="tagsPlaceholder" spellcheck="false" autocomplete="off">
+  </div>
+  <div class="suggest hidden" id="suggest"><span class="label" data-i18n="suggested"></span></div>
+
+  <div class="actions">
+    <div class="grow"><span class="status" id="status"></span><span class="kbd" id="hint" data-i18n="hintSave"></span></div>
+    <button class="btn ghost hidden" id="remove" data-i18n="remove"></button>
+    <button class="btn" id="save" data-i18n="save"></button>
+  </div>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>
